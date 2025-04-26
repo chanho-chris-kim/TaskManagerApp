@@ -30,7 +30,7 @@ namespace TaskManagerBackend.Controllers
             if (existingTask == null) return NotFound();
             existingTask.Title = updatedTask.Title;
             existingTask.Status = updatedTask.Status;
-            return NoContent();
+            return Ok(existingTask);
         }
 
         [HttpDelete("{id}")]

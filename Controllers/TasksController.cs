@@ -1,45 +1,56 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TaskManagerBackend.Data;
 using TaskManagerBackend.Models;
 
-namespace TaskManagerBackend.Controllers
+[ApiController]
+[Route("api/[controller]")]
+public class TasksController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class TasksController : ControllerBase
+    private readonly AppDbContext _context;
+
+    public TasksController(AppDbContext context)
     {
-        private static List<TaskItem> tasks = new();
+        _context = context;
+    }
 
-        [HttpGet]
-        public ActionResult<IEnumerable<TaskItem>> GetTasks()
-        {
-            return Ok(tasks);
-        }
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasks()
+    {
+        return await _context.Tasks.ToListAsync();
+    }
 
-        [HttpPost]
-        public ActionResult<TaskItem> CreateTask(TaskItem task)
-        {
-            task.Id = tasks.Count + 1;
-            tasks.Add(task);
-            return CreatedAtAction(nameof(GetTasks), new { id = task.Id }, task);
-        }
+    [HttpPost]
+    public async Task<ActionResult<TaskItem>> CreateTask(TaskItem task)
+    {
+        _context.Tasks.Add(task);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetTasks), new { id = task.Id }, task);
+    }
 
-        [HttpPut("{id}")]
-        public IActionResult UpdateTask(int id, TaskItem updatedTask)
-        {
-            var existingTask = tasks.FirstOrDefault(t => t.Id == id);
-            if (existingTask == null) return NotFound();
-            existingTask.Title = updatedTask.Title;
-            existingTask.Status = updatedTask.Status;
-            return Ok(existingTask);
-        }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateTask(int id, TaskItem updatedTask)
+    {
+        var task = await _context.Tasks.FindAsync(id);
+        if (task == null)
+            return NotFound();
 
-        [HttpDelete("{id}")]
-        public IActionResult DeleteTask(int id)
-        {
-            var task = tasks.FirstOrDefault(t => t.Id == id);
-            if (task == null) return NotFound();
-            tasks.Remove(task);
-            return NoContent();
-        }
+        task.Title = updatedTask.Title;
+        task.Status = updatedTask.Status;
+ 
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteTask(int id)
+    {
+        var task = await _context.Tasks.FindAsync(id);
+        if (task == null)
+            return NotFound();
+
+        _context.Tasks.Remove(task);
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 }

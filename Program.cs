@@ -1,4 +1,12 @@
+using Microsoft.EntityFrameworkCore;
+using TaskManagerBackend.Models;  
+using TaskManagerBackend.Data;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Register EF Core DbContext
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services
 builder.Services.AddControllers();
@@ -21,7 +29,7 @@ app.UseCors("AllowLocalhost");
 
 // Other configurations...
 app.UseHttpsRedirection();
- 
+
 // Use Swagger in dev
 if (app.Environment.IsDevelopment())
 {
@@ -29,10 +37,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
-app.MapControllers(); 
+app.MapControllers();
 
 app.Run();
